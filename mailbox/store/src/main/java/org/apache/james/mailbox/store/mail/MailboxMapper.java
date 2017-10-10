@@ -23,6 +23,7 @@ import java.util.List;
 import org.apache.james.mailbox.exception.MailboxException;
 import org.apache.james.mailbox.exception.MailboxNotFoundException;
 import org.apache.james.mailbox.model.MailboxACL;
+import org.apache.james.mailbox.model.MailboxACL.Right;
 import org.apache.james.mailbox.model.MailboxId;
 import org.apache.james.mailbox.model.MailboxPath;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
@@ -75,6 +76,15 @@ public interface MailboxMapper extends Mapper {
             throws MailboxException, MailboxNotFoundException;
 
     /**
+     * Return a List of {@link Mailbox} for the given userName and matching the right
+     * 
+     * @param userName
+     * @return right
+     * @throws MailboxException
+     */
+    List<Mailbox> findNonPersonalMailboxes(String userName, Right right) throws MailboxException;
+
+    /**
      * Return a List of {@link Mailbox} which name is like the given name
      * 
      * @param mailboxPath
@@ -102,7 +112,15 @@ public interface MailboxMapper extends Mapper {
      * @param mailbox Mailbox for whom we want to update ACL
      * @param mailboxACLCommand Update to perform
      */
-    void updateACL(Mailbox mailbox, MailboxACL.MailboxACLCommand mailboxACLCommand) throws MailboxException;
+    void updateACL(Mailbox mailbox, MailboxACL.ACLCommand mailboxACLCommand) throws MailboxException;
+
+    /**
+     * Reset the ACL of the stored mailbox.
+     *
+     * @param mailbox Mailbox for whom we want to update ACL
+     * @param mailboxACL New value of the ACL for this mailbox
+     */
+    void setACL(Mailbox mailbox, MailboxACL mailboxACL) throws MailboxException;
 
     /**
      * Return a unmodifable {@link List} of all {@link Mailbox} 

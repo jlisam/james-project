@@ -36,10 +36,11 @@ import org.apache.james.mailbox.MessageManager;
 import org.apache.james.mailbox.SubscriptionManager;
 import org.apache.james.mailbox.exception.MailboxException;
 import org.apache.james.mailbox.model.ComposedMessageId;
-import org.apache.james.mailbox.model.MailboxConstants;
+import org.apache.james.mailbox.model.MailboxId;
 import org.apache.james.mailbox.model.MailboxMetaData;
 import org.apache.james.mailbox.model.MailboxPath;
-import org.apache.james.mailbox.model.MailboxQuery;
+import org.apache.james.mailbox.model.search.MailboxQuery;
+import org.apache.james.mailbox.model.search.Wildcard;
 import org.apache.james.mailbox.store.mail.MailboxMapper;
 import org.apache.james.mailbox.store.mail.MailboxMapperFactory;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
@@ -49,7 +50,6 @@ import org.apache.james.utils.GuiceProbe;
 import com.google.common.base.Throwables;
 
 public class MailboxProbeImpl implements GuiceProbe, MailboxProbe {
-
     private final MailboxManager mailboxManager;
     private final MailboxMapperFactory mailboxMapperFactory;
     private final SubscriptionManager subscriptionManager;
@@ -64,12 +64,13 @@ public class MailboxProbeImpl implements GuiceProbe, MailboxProbe {
     }
 
     @Override
-    public void createMailbox(String namespace, String user, String name) {
+    public MailboxId createMailbox(String namespace, String user, String name) {
         MailboxSession mailboxSession = null;
         try {
             mailboxSession = mailboxManager.createSystemSession(user);
             mailboxManager.startProcessingRequest(mailboxSession);
-            mailboxManager.createMailbox(new MailboxPath(namespace, user, name), mailboxSession);
+            return mailboxManager.createMailbox(new MailboxPath(namespace, user, name), mailboxSession)
+                    .orElseThrow(() -> new MailboxException("mailbox name is probably empty"));
         } catch (MailboxException e) {
             throw Throwables.propagate(e);
         } finally {
@@ -109,7 +110,7 @@ public class MailboxProbeImpl implements GuiceProbe, MailboxProbe {
         try {
             mailboxSession = mailboxManager.createSystemSession(user);
             mailboxManager.startProcessingRequest(mailboxSession);
-            return searchUserMailboxes(user, mailboxSession)
+            return searchUserMailboxes(mailboxSession)
                     .stream()
                     .map(MailboxMetaData::getPath)
                     .map(MailboxPath::getName)
@@ -121,11 +122,11 @@ public class MailboxProbeImpl implements GuiceProbe, MailboxProbe {
         }
     }
 
-    private List<MailboxMetaData> searchUserMailboxes(String username, MailboxSession session) throws MailboxException {
+    private List<MailboxMetaData> searchUserMailboxes(MailboxSession session) throws MailboxException {
         return mailboxManager.search(
-            new MailboxQuery(new MailboxPath(MailboxConstants.USER_NAMESPACE, username, ""),
-                "*",
-                session.getPathDelimiter()),
+            MailboxQuery.privateMailboxesBuilder(session)
+                .expression(Wildcard.INSTANCE)
+                .build(),
             session);
     }
 

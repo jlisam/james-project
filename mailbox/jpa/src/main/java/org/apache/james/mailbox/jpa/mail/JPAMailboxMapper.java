@@ -34,12 +34,14 @@ import org.apache.james.mailbox.jpa.JPAId;
 import org.apache.james.mailbox.jpa.JPATransactionalMapper;
 import org.apache.james.mailbox.jpa.mail.model.JPAMailbox;
 import org.apache.james.mailbox.model.MailboxACL;
+import org.apache.james.mailbox.model.MailboxACL.Right;
 import org.apache.james.mailbox.model.MailboxId;
 import org.apache.james.mailbox.model.MailboxPath;
 import org.apache.james.mailbox.store.mail.MailboxMapper;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 
 /**
  * Data access management for mailbox.
@@ -221,7 +223,17 @@ public class JPAMailboxMapper extends JPATransactionalMapper implements MailboxM
     }
 
     @Override
-    public void updateACL(Mailbox mailbox, MailboxACL.MailboxACLCommand mailboxACLCommand) throws MailboxException {
+    public void updateACL(Mailbox mailbox, MailboxACL.ACLCommand mailboxACLCommand) throws MailboxException {
         mailbox.setACL(mailbox.getACL().apply(mailboxACLCommand));
+    }
+
+    @Override
+    public void setACL(Mailbox mailbox, MailboxACL mailboxACL) throws MailboxException {
+        mailbox.setACL(mailboxACL);
+    }
+
+    @Override
+    public List<Mailbox> findNonPersonalMailboxes(String userName, Right right) throws MailboxException {
+        return ImmutableList.of();
     }
 }

@@ -24,6 +24,8 @@ import java.util.Optional;
 import javax.inject.Inject;
 
 import org.apache.james.jmap.model.mailbox.Mailbox;
+import org.apache.james.jmap.model.mailbox.MailboxNamespace;
+import org.apache.james.jmap.model.mailbox.Rights;
 import org.apache.james.jmap.model.mailbox.Role;
 import org.apache.james.jmap.model.mailbox.SortOrder;
 import org.apache.james.mailbox.MailboxManager;
@@ -42,6 +44,7 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 
 public class MailboxFactory {
+    public static final boolean NO_RESET_RECENT = false;
     private final MailboxManager mailboxManager;
 
     public static class MailboxBuilder {
@@ -98,6 +101,8 @@ public class MailboxFactory {
         MailboxPath mailboxPath = messageManager.getMailboxPath();
         Optional<Role> role = Role.from(mailboxPath.getName());
         MailboxCounters mailboxCounters = messageManager.getMailboxCounters(mailboxSession);
+        MessageManager.MetaData metaData = messageManager.getMetaData(NO_RESET_RECENT, mailboxSession, MessageManager.MetaData.FetchGroup.NO_COUNT);
+
         return Mailbox.builder()
             .id(messageManager.getId())
             .name(getName(mailboxPath, mailboxSession))
@@ -106,7 +111,17 @@ public class MailboxFactory {
             .unreadMessages(mailboxCounters.getUnseen())
             .totalMessages(mailboxCounters.getCount())
             .sortOrder(SortOrder.getSortOrder(role))
+            .sharedWith(Rights.fromACL(metaData.getACL()))
+            .namespace(getNamespace(mailboxPath, mailboxSession))
             .build();
+    }
+
+    @VisibleForTesting MailboxNamespace getNamespace(MailboxPath mailboxPath, MailboxSession mailboxSession) {
+        String mailboxPathUser = mailboxPath.getUser();
+        if (mailboxSession.getUser().isSameUser(mailboxPathUser)) {
+            return MailboxNamespace.personal();
+        }
+        return MailboxNamespace.delegated(mailboxPathUser);
     }
 
     @VisibleForTesting String getName(MailboxPath mailboxPath, MailboxSession mailboxSession) {

@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -33,8 +34,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
 import javax.mail.Flags;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.james.imap.api.ImapSessionState;
 import org.apache.james.imap.api.ImapSessionUtils;
 import org.apache.james.imap.api.process.ImapLineHandler;
@@ -50,17 +53,17 @@ import org.apache.james.mailbox.exception.MailboxException;
 import org.apache.james.mailbox.model.ComposedMessageId;
 import org.apache.james.mailbox.model.Content;
 import org.apache.james.mailbox.model.Headers;
-import org.apache.james.mailbox.model.MailboxACL.MailboxACLCommand;
-import org.apache.james.mailbox.model.MailboxACL.MailboxACLEntryKey;
-import org.apache.james.mailbox.model.MailboxACL.MailboxACLRight;
-import org.apache.james.mailbox.model.MailboxACL.MailboxACLRights;
+import org.apache.james.mailbox.model.MailboxACL;
+import org.apache.james.mailbox.model.MailboxACL.ACLCommand;
+import org.apache.james.mailbox.model.MailboxACL.EntryKey;
+import org.apache.james.mailbox.model.MailboxACL.Rfc4314Rights;
+import org.apache.james.mailbox.model.MailboxACL.Right;
 import org.apache.james.mailbox.model.MailboxAnnotation;
 import org.apache.james.mailbox.model.MailboxAnnotationKey;
 import org.apache.james.mailbox.model.MailboxCounters;
 import org.apache.james.mailbox.model.MailboxId;
 import org.apache.james.mailbox.model.MailboxMetaData;
 import org.apache.james.mailbox.model.MailboxPath;
-import org.apache.james.mailbox.model.MailboxQuery;
 import org.apache.james.mailbox.model.MessageAttachment;
 import org.apache.james.mailbox.model.MessageId;
 import org.apache.james.mailbox.model.MessageRange;
@@ -72,9 +75,9 @@ import org.apache.james.mailbox.model.MultimailboxesSearchQuery;
 import org.apache.james.mailbox.model.SearchQuery;
 import org.apache.james.mailbox.model.TestId;
 import org.apache.james.mailbox.model.UpdatedFlags;
+import org.apache.james.mailbox.model.search.MailboxQuery;
 import org.apache.james.mailbox.store.mail.model.DefaultMessageId;
 import org.junit.Test;
-import org.apache.commons.lang.NotImplementedException;
 
 import com.google.common.collect.ImmutableList;
 
@@ -360,21 +363,26 @@ public class MailboxEventAnalyserTest {
             throw new UnsupportedOperationException("Not implemented");
         }
 
-        public boolean hasRight(MailboxPath mailboxPath, MailboxACLRight mailboxACLRight, MailboxSession mailboxSession) throws MailboxException {
+        public boolean hasRight(MailboxPath mailboxPath, Right mailboxACLRight, MailboxSession mailboxSession) throws MailboxException {
             throw new NotImplementedException("Not implemented");
         }
 
-        public MailboxACLRights myRights(MailboxPath mailboxPath, MailboxSession mailboxSession) throws MailboxException {
+        public Rfc4314Rights myRights(MailboxPath mailboxPath, MailboxSession mailboxSession) throws MailboxException {
             throw new NotImplementedException("Not implemented");
         }
 
-        public MailboxACLRights[] listRigths(MailboxPath mailboxPath, MailboxACLEntryKey mailboxACLEntryKey, MailboxSession mailboxSession) throws MailboxException {
+        public Rfc4314Rights[] listRigths(MailboxPath mailboxPath, EntryKey mailboxACLEntryKey, MailboxSession mailboxSession) throws MailboxException {
             throw new NotImplementedException("Not implemented");
         }
 
-        public void setRights(MailboxPath mailboxPath,
-                MailboxACLCommand mailboxACLCommand, MailboxSession session)
+        public void applyRightsCommand(MailboxPath mailboxPath,
+                                       ACLCommand mailboxACLCommand, MailboxSession session)
                 throws MailboxException {
+            throw new NotImplementedException("Not implemented");
+        }
+
+        @Override
+        public void setRights(MailboxPath mailboxPath, MailboxACL mailboxACL, MailboxSession session) throws MailboxException {
             throw new NotImplementedException("Not implemented");
         }
 

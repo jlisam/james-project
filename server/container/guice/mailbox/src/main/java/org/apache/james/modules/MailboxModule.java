@@ -30,6 +30,7 @@ public class MailboxModule extends AbstractModule {
         Multibinder<GuiceProbe> probeMultiBinder = Multibinder.newSetBinder(binder(), GuiceProbe.class);
         probeMultiBinder.addBinding().to(MailboxProbeImpl.class);
         probeMultiBinder.addBinding().to(QuotaProbesImpl.class);
+        probeMultiBinder.addBinding().to(ACLProbeImpl.class);
     }
 
 }

@@ -23,14 +23,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.Date;
+
 import javax.mail.Flags;
 import javax.management.MalformedObjectNameException;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.james.adapter.mailbox.MailboxCopierManagementMBean;
 import org.apache.james.adapter.mailbox.MailboxManagerManagementMBean;
 import org.apache.james.adapter.mailbox.ReIndexerManagementMBean;
 import org.apache.james.mailbox.exception.MailboxException;
 import org.apache.james.mailbox.model.ComposedMessageId;
+import org.apache.james.mailbox.model.MailboxId;
 import org.apache.james.mailbox.model.MailboxPath;
 import org.apache.james.mailbox.store.mail.model.Mailbox;
 import org.apache.james.mailbox.store.probe.MailboxProbe;
@@ -68,8 +71,8 @@ public class JmxMailboxProbe implements MailboxProbe, JmxProbe {
     }
 
     @Override
-    public void createMailbox(String namespace, String user, String name) {
-        mailboxManagerManagement.createMailbox(namespace, user, name);
+    public MailboxId createMailbox(String namespace, String user, String name) {
+        return mailboxManagerManagement.createMailbox(namespace, user, name);
     }
 
     @Override
@@ -97,23 +100,20 @@ public class JmxMailboxProbe implements MailboxProbe, JmxProbe {
         reIndexerManagement.reIndex();
     }
 
-
     @Override
     public Mailbox getMailbox(String namespace, String user, String name) {
-        return null;
+        throw new NotImplementedException();
     }
-
 
     @Override
     public ComposedMessageId appendMessage(String username, MailboxPath mailboxPath, InputStream message,
             Date internalDate, boolean isRecent, Flags flags) throws MailboxException {
-        return null;
+        throw new NotImplementedException();
     }
 
 
     @Override
     public Collection<String> listSubscriptions(String user) throws Exception {
-        return null;
+        throw new NotImplementedException();
     }
-
 }

@@ -52,7 +52,7 @@ import org.apache.james.mailbox.exception.ReadOnlyException;
 import org.apache.james.mailbox.exception.UnsupportedRightException;
 import org.apache.james.mailbox.model.ComposedMessageId;
 import org.apache.james.mailbox.model.MailboxACL;
-import org.apache.james.mailbox.model.MailboxACL.MailboxACLRights;
+import org.apache.james.mailbox.model.MailboxACL.Rfc4314Rights;
 import org.apache.james.mailbox.model.MailboxCounters;
 import org.apache.james.mailbox.model.MailboxId;
 import org.apache.james.mailbox.model.MailboxPath;
@@ -64,7 +64,6 @@ import org.apache.james.mailbox.model.MessageRange;
 import org.apache.james.mailbox.model.MessageResult.FetchGroup;
 import org.apache.james.mailbox.model.MessageResultIterator;
 import org.apache.james.mailbox.model.SearchQuery;
-import org.apache.james.mailbox.model.SimpleMailboxACL;
 import org.apache.james.mailbox.model.UpdatedFlags;
 import org.apache.james.mailbox.quota.QuotaManager;
 import org.apache.james.mailbox.quota.QuotaRootResolver;
@@ -92,6 +91,7 @@ import org.apache.james.util.IteratorWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -470,11 +470,8 @@ public class StoreMessageManager implements org.apache.james.mailbox.MessageMana
         return aclResolver.isReadWrite(myRights(session), getSharedPermanentFlags(session));
     }
 
-    /**
-     * @see MessageManager#getMetaData(boolean, MailboxSession,
-     *      org.apache.james.mailbox.MessageManager.MetaData.FetchGroup)
-     */
-    public MetaData getMetaData(boolean resetRecent, MailboxSession mailboxSession, org.apache.james.mailbox.MessageManager.MetaData.FetchGroup fetchGroup) throws MailboxException {
+    @Override
+    public MetaData getMetaData(boolean resetRecent, MailboxSession mailboxSession, MetaData.FetchGroup fetchGroup) throws MailboxException {
 
         final List<MessageUid> recent;
         final Flags permanentFlags = getPermanentFlags(mailboxSession);
@@ -799,12 +796,12 @@ public class StoreMessageManager implements org.apache.james.mailbox.MessageMana
         return messageMapper.findFirstUnseenMessageUid(getMailboxEntity());
     }
 
-    private MailboxACLRights myRights(MailboxSession session) throws MailboxException {
+    private Rfc4314Rights myRights(MailboxSession session) throws MailboxException {
         User user = session.getUser();
         if (user != null) {
             return aclResolver.resolveRights(user.getUserName(), groupMembershipResolver, mailbox.getACL(), mailbox.getUser(), new GroupFolderResolver(session).isGroupFolder(mailbox));
         } else {
-            return SimpleMailboxACL.NO_RIGHTS;
+            return MailboxACL.NO_RIGHTS;
         }
     }
 
@@ -817,9 +814,27 @@ public class StoreMessageManager implements org.apache.james.mailbox.MessageMana
      * @throws UnsupportedRightException
      */
     protected MailboxACL getResolvedMailboxACL(MailboxSession mailboxSession) throws UnsupportedRightException {
-        return aclResolver.applyGlobalACL(mailbox.getACL(), new GroupFolderResolver(mailboxSession).isGroupFolder(mailbox));
+        return filteredForSession(mailbox, aclResolver.applyGlobalACL(mailbox.getACL(), new GroupFolderResolver(mailboxSession).isGroupFolder(mailbox)), mailboxSession);
     }
-    
+
+    /**
+     * ACL is sensible information and as such we should expose as few information as possible
+     * to users. This method allows to filter a {@link MailboxACL} in order to present it to
+     * the connected user.
+     */
+    @VisibleForTesting static MailboxACL filteredForSession(Mailbox mailbox, MailboxACL acl, MailboxSession mailboxSession) throws UnsupportedRightException {
+        if (mailboxSession.getUser().isSameUser(mailbox.getUser())) {
+            return acl;
+        }
+        MailboxACL.EntryKey userAsKey = MailboxACL.EntryKey.createUserEntryKey(mailboxSession.getUser().getUserName());
+        Rfc4314Rights rights = acl.getEntries().getOrDefault(userAsKey, new Rfc4314Rights());
+        if (rights.contains(MailboxACL.Right.Administer)) {
+            return acl;
+        }
+        return new MailboxACL(ImmutableMap.of(userAsKey, rights));
+    }
+
+
     @Override
     public MailboxId getId() {
         return mailbox.getMailboxId();
